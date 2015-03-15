@@ -56,11 +56,16 @@ bytime <- split(activity[,1], activity$interval)
 bytime <- sapply(bytime, function(x) mean(x,na.rm=TRUE))
 ```
 
+We can now produce a time-series plot of the average steps taken per time interval: 
+
 ```r
 plot(names(bytime), bytime, type = "l", main = "Average Number of Steps Taken Per Interval", ylab = "Steps Taken", xlab = "Interval" )
 ```
 
 ![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-6-1.png) 
+
+We can now find the time with the most average steps taken:
+
 
 ```r
 names(which.max(bytime))
@@ -154,7 +159,7 @@ box(col = "grey40")
 mtext("Interval", side = 1, line = 2)
 mtext("Average Steps Taken", side = 4, line = 0, adj = -9)
 mtext("Steps Taken Per Time Interval", side = 2, line = 2, adj = -1.5)
-mtext("Weekends", side = 3, line = 7.5, adj = .05)
+        mtext("Weekends", side = 3, line = 7.5, adj = .05)
 mtext("Weekdays", side = 3, line = -1.5, adj = .05)
 ```
 
