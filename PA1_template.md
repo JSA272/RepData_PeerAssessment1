@@ -1,35 +1,163 @@
-# Reproducible Research: Peer Assessment 1
+---
+title: 'Reproducible Research: Peer Assessment 1'
+output: html_document
+---
 
 
 ## Loading and preprocessing the data
 First import the data using read.csv(), into a data.frame called **activity**
-```{r]
+
+
+```r
 ## Read CSV data
-activity <- read.csv("rep1/activity.csv")
+activity <- read.csv("activity.csv")
 ## Convert activity$date using as.Date
 activity$date <- as.Date(activity$date)
 ```
 Data import and preprocessing are now complete.
 
 ## What is mean total number of steps taken per day?
-First we will split the data.frame into the list **bydate**, then apply mean() to each of its elements
+First we will split the data.frame into the list **bydate**, then apply *mean()* to each of its elements
 
 ```r
 ## Split **activity** by date
-
+bydate <- split(activity[,1], activity$date)
 ## Apply *sum()* to every element of **bydate**.
+bydate <- sapply(bydate, sum)
 ```
-rm(datesum)
-sum(bydate[[3]])
-hist(datesum)
-head(datesum)
-unlist(datesum)
+Now can use this processed data to draw a histogram of the information
+
+```r
+hist(bydate, main = "Frequency of Total Steps Taken Per Day", xlab = "Number of Steps")
+```
+
+![plot of chunk unnamed-chunk-3](figure/unnamed-chunk-3-1.png) 
+The mean and median for this data can then be found:
+
+```r
+summary(bydate)[3:4]
+```
+
+```
+## Median   Mean 
+##  10760  10770
+```
+
 ## What is the average daily activity pattern?
+Make a time-series plot of mean of steps taken per 5-minute time block, averaged over all days
+
+To do this, we will split the data into groups based on the interval data, then find the mean for each of these groups. We can then plot the resulting data for mean steps per time period.
 
 
+```r
+## Split activty$steps information by activity$interval 
+bytime <- split(activity[,1], activity$interval)
+## 
+bytime <- sapply(bytime, function(x) mean(x,na.rm=TRUE))
+```
 
+```r
+plot(names(bytime), bytime, type = "l", main = "Average Number of Steps Taken Per Interval", ylab = "Steps Taken", xlab = "Interval" )
+```
+
+![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-6-1.png) 
+
+```r
+names(which.max(bytime))
+```
+
+```
+## [1] "835"
+```
 ## Imputing missing values
+1. Find the total number of NAs in the data.frame
+
+Here I sum the number TRUE responses to *is.na()* called on the data.frame 
+
+```r
+sum(is.na(activity))
+```
+
+```
+## [1] 2304
+```
+Thus, there are 2304 missing values in the data.frame.
+
+2. 
+I choose to replace NA values with the average steps per taken during that interval
+
+3.
+To do this, we will first create a new data frame identical to the first. We will then loop through the new dataframe to find the rows with NAs. When we find one, we rewrite the steps data for that row with the data from the **bytime** data that we found earlier.
 
 
+```r
+# Creates new *data.frame* **activity2**, identical to **activity**
+activity2 <- activity
+# Loops through rows of **activity2**, finds if each row is NA, then converts all NAs to the 
+# step data found in **bytime**
+for (i in 1:nrow(activity2)){
+        if (is.na(activity2[i,1])){
+                activity2[i,1] <- bytime[[as.character(activity2[i,3])]]
+        } 
+}
+```
+
+4. Create a histogram of the new data
+
+
+```r
+## Split **activity** by date
+bydate2 <- split(activity2[,1], activity2$date)
+## Apply *sum()* to every element of **bydate**.
+bydate2 <- sapply(bydate2, sum)
+```
+![plot of chunk unnamed-chunk-11](figure/unnamed-chunk-11-1.png) 
+
+The mode of **activity2** is 1.0766189 &times; 10<sup>4</sup>, the same as for **activity**. Its median is 1.0766189 &times; 10<sup>4</sup>, almost the same as **activity's** 10765. This is the expected result of adding additional data that is equal to the mean of previous data.
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+To complete this step, I first split the **activity2** data by weekend/weekday status, then use the same *sapply()* technique as in previous steps to find the average steps per time interval for each day group.
+
+
+```r
+# Add a new column to the activity2 dataframe, a 2 level factor with labels weekend/weekday
+activity2$dtype <- factor(0:1, labels = c("weekday","weekend"))
+# Loop through the rows of the dataframe correct the weekend/weekday column
+for (i in 1:nrow(activity2)){
+        if (weekdays(activity2[i,2], TRUE) %in% c("Sat", "Sun")){
+                activity2[i,4] <- "weekend"
+        } else {
+                activity2[i,4] <- "weekday"
+        }
+}
+# Create new list compare, equal to splitting activity2 by the weekend/weekday column
+compare <- split(activity2[,c(1,3,4)], activity2$dtype)
+# Find the mean for each time interval separately for each weekday/weekend 
+days <- compare[[1]]
+days <- split(days[,1], days[,2])
+days <- sapply(days, mean)
+ends <- compare[[2]]
+ends <- split(ends[,1], ends[,2])
+ends <- sapply(ends, mean)
+```
+
+This completes the data analysis step. We can now create the plot.
+
+```r
+par(mfrow=c(2,1), mar = c(0,4,3,3))
+plot(names(ends), ends, type = "l", xaxt = "n", ylab = "")
+box(col = "grey40")
+par(mar = c(3,4,0,3))
+plot(names(days), days, type = "l", ylab = "")
+box(col = "grey40")
+mtext("Interval", side = 1, line = 2)
+mtext("Average Steps Taken", side = 4, line = 0, adj = -9)
+mtext("Steps Taken Per Time Interval", side = 2, line = 2, adj = -1.5)
+mtext("Weekends", side = 3, line = 7.5, adj = .05)
+mtext("Weekdays", side = 3, line = -1.5, adj = .05)
+```
+
+![plot of chunk unnamed-chunk-13](figure/unnamed-chunk-13-1.png) 
+
+It looks like the user took more steps later in the day on the weekends than during the week. Thanks for reading my project!
